@@ -31,29 +31,46 @@ libcapstone-dev \
 seccomp \
 ruby-dev \
 xxd \
-netcat  \
 iproute2 \
 vim \
-elfutils \
 sudo \
+elfutils \
 binutils-common \
-patchelf && \
+python-is-python3 \
+neovim && \
 rm -rf /var/lib/apt/lists/*
 
 RUN gem install one_gadget seccomp-tools
 
 RUN cd /opt &&\
 git clone --depth 1 --recurse-submodules https://github.com/pwndbg/pwndbg && \
-cd pwndbg &&\
-./setup.sh
+cd pwndbg && ./setup.sh
 
-RUN python3 -m pip install --upgrade pip && \
-python3 -m pip install shellen ropgadget ropper
+RUN python -m pip install --upgrade pip && \
+python -m pip install shellen ropgadget ropper
 
-RUN python3 -m pip install git+https://github.com/Gallopsled/pwntools.git@dev
+RUN python -m pip install git+https://github.com/Gallopsled/pwntools.git@dev
 
+RUN git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+RUN git clone https://github.com/X3eRo0/CTFMate.git /opt/CTFMate
+WORKDIR /opt/CTFMate
+RUN python -m pip install -r requirements.txt
+RUN chmod +x ctfmate.py
+RUN ln -s /opt/CTFMate/ctfmate.py /usr/bin/ctfmate
+
+RUN apt-get install -y autoconf
+
+# RUN git clone https://github.com/mishrasunny174/libc-debug-build.git /opt/libc-debug-build
+RUN git clone https://github.com/NixOS/patchelf.git /opt/patchelf
+WORKDIR /opt/patchelf
+RUN ./bootstrap.sh
+RUN ./configure
+RUN make -j 8
+RUN make check
+RUN make install
+
+RUN pip3 install decomp2dbg && decomp2dbg --install 
+
+WORKDIR /hack
 COPY configs/ /root/
-
-RUN git clone https://github.com/mishrasunny174/libc-debug-build.git /opt/libc-debug-build
-
-CMD ["tmux", "-u", "new", "-s" ,"pwn"]
+CMD ["tmux", "-u", "new"]
